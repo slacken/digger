@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Digger::VERSION
   spec.authors       = ["binz"]
   spec.email         = ["xinkiang@gmail.com"]
-  spec.summary       = %q{Dig need stractual infomation from wab page.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{Dig need stractual infomation from web page.}
+  spec.description   = %q{}
   spec.homepage      = ""
   spec.license       = "MIT"
 
