@@ -2,11 +2,12 @@ require 'digger/pattern'
 
 module Digger
   class Model
-    @@patterns = {}
+    @@digger_config = {'pattern'=>{}, 'index'=>{}}
 
     class << self
+      # patterns
       def pattern_config
-        @@patterns[self.name] ||= {}
+        @@digger_config['pattern'][self.name] ||= {}
       end
 
       Pattern::TYPES.each do |method|
@@ -17,10 +18,17 @@ module Digger
         }
       end
 
-      def index_page
+      # index page
+      def index_config
+        @@digger_config['index'][self.name]
       end
 
-      def one_page
+      def index_page(pattern, *args)
+         @@digger_config['index'][self.name] = Index.new(pattern, args)
+      end
+
+      def index_page?
+        !index_config.nil?
       end
     end
 
@@ -32,10 +40,20 @@ module Digger
       result
     end
 
-    def dig(url)
+    def dig_url(url)
       client = Digger::HTTP.new
       page = client.fetch_page(url)
       match_page(page)
+    end
+
+    def dig(urls = [], cocurrence = 1)
+      if urls.empty?
+        if self.class.index_page?
+          self.class.index_config.process(cocurrence){|url| dig_url(url) }
+        end
+      else
+        Index.batch(urls, cocurrence){|url| dig_url(url) }
+      end
     end
   end
 end
