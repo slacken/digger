@@ -1,4 +1,3 @@
-require 'digger/pattern'
 
 module Digger
   class Model
