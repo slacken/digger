@@ -45,13 +45,13 @@ module Digger
       match_page(page)
     end
 
-    def dig(urls = [], cocurrence = 1)
-      if urls.empty?
-        if self.class.index_page?
-          self.class.index_config.process(cocurrence){|url| dig_url(url) }
-        end
-      else
-        Index.batch(urls, cocurrence){|url| dig_url(url) }
+    def dig_urls(urls, cocurrence = 1)
+      Index.batch(urls, cocurrence){|url| dig_url(url) }
+    end
+
+    def dig(cocurrence = 1)
+      if self.class.index_page?
+        self.class.index_config.process(cocurrence){|url| dig_url(url) }
       end
     end
   end
