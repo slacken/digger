@@ -3,7 +3,7 @@ module Digger
     class NoBlockError < ArgumentError; end
 
     def process(cocurrence = 1, &block)
-      Index.batch(urls, cocurrence, block)
+      Index.batch(urls, cocurrence, &block)
     end
 
     def urls
