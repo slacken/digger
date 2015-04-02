@@ -185,7 +185,7 @@ module Digger
       # remove anchor
       link =
         begin
-          URI.encode(URI.decode(link.gsub(/#[a-zA-Z0-9_-]*$/, '')))
+          URI.encode(URI.decode(link.to_s.gsub(/#[a-zA-Z0-9_-]*$/, '')))
         rescue URI::Error
           return nil
         end
