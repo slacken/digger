@@ -39,14 +39,14 @@ module Digger
       result
     end
 
-    def dig_url(url)
-      client = Digger::HTTP.new
+    def dig_url(url, opts = {})
+      client = Digger::HTTP.new(opts)
       page = client.fetch_page(url)
       match_page(page)
     end
 
-    def dig_urls(urls, cocurrence = 1)
-      Index.batch(urls, cocurrence){|url| dig_url(url) }
+    def dig_urls(urls, cocurrence = 1, opts = {})
+      Index.batch(urls, cocurrence){|url| dig_url(url, opts) }
     end
 
     def dig(cocurrence = 1)

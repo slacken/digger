@@ -23,4 +23,8 @@ describe Digger do
     item = Item.new.match_page(page)
     expect(item[:sites].include?('读远')).to be(true)
   end
+
+  it "index multiple threading" do
+    
+  end
 end
