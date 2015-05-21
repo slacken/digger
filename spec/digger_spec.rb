@@ -7,6 +7,9 @@ pattern = Digger::Pattern.new({type: 'css_many', value: '.sites>a>span' })
 
 class Item < Digger::Model
   css_many sites: '.sites>a>span'
+  css_one logo: '.logo'
+  validate_presence :sites
+  validate_includeness :sites, :logo
 end
 
 describe Digger do
@@ -22,6 +25,9 @@ describe Digger do
   it "model should dig content" do
     item = Item.new.match_page(page)
     expect(item[:sites].include?('读远')).to be(true)
+  end
+
+  it "validation support" do
   end
 
   it "index multiple threading" do

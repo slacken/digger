@@ -17,6 +17,15 @@ module Digger
         }
       end
 
+      def validate_presence(*keys)
+        keys_all = pattern_config.keys
+        raise "Pattern keys #{(keys - keys_all).join(', ')} should be present" unless keys.all?{|k| keys_all.include?(k) }
+      end
+
+      def validate_includeness(*keys)
+        raise "Pattern keys #{(pattern_config.keys - keys).join(', ')} should not be included" unless pattern_config.keys.all?{|k| keys.include?(k)}
+      end
+
       # index page
       def index_config
         @@digger_config['index'][self.name]
