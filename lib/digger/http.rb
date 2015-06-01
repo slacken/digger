@@ -49,7 +49,7 @@ module Digger
       url = URI(url)
       pages = []
       get(url, referer) do |response, code, location, redirect_to, response_time|
-        handle_compression response
+        handle_compression response if handle_compression?
         pages << Page.new(location, body: response.body,
                                     code: code,
                                     headers: response.to_hash,
@@ -68,6 +68,13 @@ module Digger
       end
 
       [Page.new(url, error: e, referer: referer, depth: depth)]
+    end
+
+    #
+    # Accept response compression, may bring encoding error if true
+    # 
+    def handle_compression?
+      @opts[:handle_compression]
     end
 
     #
@@ -185,7 +192,7 @@ module Digger
       opts['User-Agent'] = user_agent if user_agent
       opts['Referer'] = referer.to_s if referer
       opts['Cookie']  = ::HTTP::Cookie.cookie_value(cookie_jar.cookies(url)) if accept_cookies?
-      opts['Accept-Encoding'] = 'gzip,deflate'
+      opts['Accept-Encoding'] = 'gzip,deflate' if handle_compression?
 
       retries = 0
       begin
