@@ -27,33 +27,36 @@ module Digger
     end
 
     MATCH_MAX = 3
-    
-    TYPES = 0.upto(MATCH_MAX).map{|i| "match_#{i}"} + %w{match_many css_one css_many}
 
-    def regexp?
-      TYPES.index(type) <= MATCH_MAX + 1 # match_many in addition
-    end
+    TYPES_REGEXP = 0.upto(MATCH_MAX).map{|i| "match_#{i}"} + %w{match_many}
+    TYPES_CSS = %w{css_one css_many}
+    TYPES_JSON = %w{json jsonp}
+    
+    TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON
 
     def match_page(page, &callback)
       blk = callback || safe_block
-      if regexp? # regular expression
-        index = TYPES.index(type)
-        blk ||= ->(text){text.strip}
+      if TYPES_REGEXP.include?(type) # regular expression
+        blk ||= ->(text){ text.strip }
         # content is String
         if type == 'match_many'
           match = page.body.gsub(value).to_a
         else
+          index = TYPES_REGEXP.index(type)
           matches = page.body.match(value)
           match = matches.nil? ? nil : matches[index]
         end
-      else # css expression
-        blk ||= ->(node){node.content.strip}
+      elsif TYPES_CSS.include?(type) # css expression
+        blk ||= ->(node){ node.content.strip }
         # content is Nokogiri::HTML::Document
         if type == 'css_one'
           match = page.doc.css(value).first
-        elsif type == 'css_many' # css_many
+        else
           match = page.doc.css(value)
         end
+      elsif TYPES_JSON.include?(type)
+        json = page.send(type)
+        match = json_fetch(json, value)
       end
       if match.nil?
         nil
@@ -64,6 +67,23 @@ module Digger
       end
     rescue
       nil
+    end
+
+    def json_fetch(json, keys)
+      if keys.is_a? String
+        # parse json keys like '$.k1.k2[0]'
+        parts = keys.match(/^\$[\S]*$/)[0].scan(/(\.([\w]+)|\[([\d]+)\])/).map do |p|
+          p[1].nil? ? { index: p[2].to_i  } : { key: p[1] }
+        end
+        json_fetch(json, parts)
+      elsif keys.is_a? Array
+        if keys.length == 0
+          json
+        else
+          pt = keys.shift
+          json_fetch(json[pt[:index] || pt[:key]], keys)
+        end
+      end
     end
 
     class Nokogiri::XML::Node

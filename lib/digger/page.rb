@@ -95,7 +95,13 @@ module Digger
       end
     end
 
+    def json
+      @json ||= JSON.parse body
+    end
 
+    def jsonp
+      @jsonp ||= JSON.parse body.match(/^[^\(]+?\((.+)\)[^\)]*$/)[1]
+    end
 
     #
     # Discard links, a next call of page.links will return an empty array
