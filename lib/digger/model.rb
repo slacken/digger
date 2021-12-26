@@ -1,16 +1,19 @@
 
 module Digger
   class Model
-    @@digger_config = {'pattern'=>{}, 'index'=>{}}
+    @@digger_config = {
+      'pattern' => {},
+      'index' => {}
+    }
 
     class << self
       # patterns
       def pattern_config
-        @@digger_config['pattern'][self.name] ||= {}
+        @@digger_config['pattern'][name] ||= {}
       end
 
       Pattern::TYPES.each do |method|
-        define_method method, ->(pairs, &block){
+        define_method method, -> (pairs, &block) {
           pairs.each_pair do |key, value|
             pattern_config[key] = Pattern.new(type: method, value: value, block: block)
           end
@@ -18,21 +21,22 @@ module Digger
       end
 
       def validate_presence(*keys)
-        keys_all = pattern_config.keys
-        raise "Pattern keys #{(keys - keys_all).join(', ')} should be present" unless keys.all?{|k| keys_all.include?(k) }
+        is_all = pattern_config.keys.all? { |k| keys.include?(k) }
+        raise "Pattern keys #{(keys - keys_all).join(', ')} should be present" unless is_all
       end
 
       def validate_includeness(*keys)
-        raise "Pattern keys #{(pattern_config.keys - keys).join(', ')} should not be included" unless pattern_config.keys.all?{|k| keys.include?(k)}
+        is_all = pattern_config.keys.all? { |k| keys.include?(k) }
+        raise "Pattern keys #{(pattern_config.keys - keys).join(', ')} should not be included" if is_all
       end
 
       # index page
       def index_config
-        @@digger_config['index'][self.name]
+        @@digger_config['index'][name]
       end
 
       def index_page(pattern, *args)
-         @@digger_config['index'][self.name] = Index.new(pattern, args)
+        @@digger_config['index'][name] = Index.new(pattern, args)
       end
 
       def index_page?
@@ -55,12 +59,14 @@ module Digger
     end
 
     def dig_urls(urls, cocurrence = 1, opts = {})
-      Index.batch(urls, cocurrence){|url| dig_url(url, opts) }
+      Index.batch(urls, cocurrence) { |url| dig_url(url, opts) }
     end
 
     def dig(cocurrence = 1)
       if self.class.index_page?
-        self.class.index_config.process(cocurrence){|url| dig_url(url) }
+        self.class.index_config.process(cocurrence) do |url|
+          dig_url(url)
+        end
       end
     end
   end
