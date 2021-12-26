@@ -28,15 +28,11 @@ module Digger
     # OpenStruct it holds users defined data
     attr_accessor :user_data
 
-    attr_accessor :aliases
-
-    attr_accessor :domain_aliases
+    attr_accessor :aliases, :domain_aliases, :fetched_at
 
     # Whether the current page should be stored
     # Default: true
     attr_accessor :storable
-
-    attr_accessor :fetched_at
 
     #
     # Create a new page
@@ -61,7 +57,7 @@ module Digger
     end
 
     def title
-      doc.title if doc
+      doc&.title
     end
 
     #
@@ -75,6 +71,7 @@ module Digger
         doc.search('//a[@href]').each do |a|
           u = a['href']
           next if u.nil? || u.empty?
+
           abs = to_absolute(u) rescue next
           @links << abs if abs && in_domain?(abs)
         end
@@ -101,7 +98,7 @@ module Digger
     end
 
     def jsonp
-      @jsonp ||= JSON.parse body.match(/^[^\(]+?\((.+)\)[^\)]*$/)[1]
+      @jsonp ||= JSON.parse body.match(/^[^(]+?\((.+)\)[^)]*$/)[1]
     end
 
     #
@@ -163,7 +160,7 @@ module Digger
     # returns +false+ otherwise.
     #
     def not_found?
-      404 == @code
+      @code == 404
     end
 
     #
@@ -177,6 +174,7 @@ module Digger
               end unless @base
 
       return nil if @base && @base.to_s.empty?
+
       @base
     end
 
@@ -245,6 +243,7 @@ module Digger
 
     def expired?(ttl)
       return false if fetched_at.nil?
+
       (Time.now.to_i - ttl) > fetched_at
     end
 

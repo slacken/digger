@@ -8,32 +8,33 @@ module Digger
 
     def urls
       @urls ||= begin
-        args = self.args.map{|a| (a.respond_to? :each) ? a.to_a : [a]}
-        args.shift.product(*args).map{|arg| pattern_applied_url(arg)}
+        args = self.args.map { |a| a.respond_to?(:each) ? a.to_a : [a] }
+        args.shift.product(*args).map { |arg| pattern_applied_url(arg) }
       end
     end
 
     def pattern_applied_url(arg)
-      pattern.gsub('*').each_with_index{|_, i| arg[i]}
+      pattern.gsub('*').each_with_index { |_, i| arg[i] }
     end
 
     def self.batch(entities, cocurrence = 1, &block)
-      raise NoBlockError, "No block given" unless block
+      raise NoBlockError, 'No block given' unless block
 
       if cocurrence > 1
-        results = {}
-        entities.each_slice(cocurrence) do |group|
+        results = Array.new(entities.size)
+        entities.each_slice(cocurrence).with_index do |group, idx1|
           threads = []
-          group.each do |entity|
+          group.each_with_index do |entity, idx2|
+            index = idx1 * cocurrence + idx2
             threads << Thread.new(entity) do |ent|
-              results[ent] = block.call(ent)
+              results[index] = block.call(ent)
             end
           end
-          threads.each{|thread| thread.join}
+          threads.each(&:join)
         end
-        entities.map{|ent| results[ent]}
+        results
       else
-        entities.map{|ent| block.call(ent) }
+        entities.map { |ent| block.call(ent) }
       end
     end
   end
