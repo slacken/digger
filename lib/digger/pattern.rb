@@ -35,6 +35,7 @@ module Digger
     TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON
 
     def match_page(page)
+      return unless page.success?
       if TYPES_REGEXP.include?(type) # regular expression
         regexp_match(page.body)
       elsif TYPES_CSS.include?(type) # css expression
