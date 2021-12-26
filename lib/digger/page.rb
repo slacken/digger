@@ -3,6 +3,7 @@ require 'json'
 require 'ostruct'
 require 'set'
 require 'kconv'
+require 'uri'
 
 # https://github.com/taganaka/polipus/blob/master/lib/polipus/page.rb
 module Digger
@@ -186,16 +187,7 @@ module Digger
     def to_absolute(link)
       return nil if link.nil?
 
-      # link = link.to_s.encode('utf-8', 'binary', :invalid => :replace, :undef => :replace, :replace => '')
-
-      # remove anchor
-      link =
-        begin
-          URI.encode(URI.decode(link.to_s.gsub(/#[a-zA-Z0-9_-]*$/, '')))
-        rescue URI::Error
-          return nil
-        end
-
+      link = link.to_s.encode('utf-8', 'binary', invalid: :replace, undef: :replace, replace: '').gsub(/#[\w]*$/, '')
       relative = begin
                    URI(link)
                  rescue URI::Error

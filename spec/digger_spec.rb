@@ -1,15 +1,14 @@
 require 'digger'
 
 http = Digger::HTTP.new
-page = http.fetch_page('http://nan.so/')
+page = http.fetch_page('http://www.baidu.com/')
 
-pattern = Digger::Pattern.new({type: 'css_many', value: '.sites>a>span' })
+pattern = Digger::Pattern.new({ type: 'css_many', value: '#s-top-left>a' })
 
 class Item < Digger::Model
-  css_many sites: '.sites>a>span'
-  css_one logo: '.logo'
+  css_many sites: '#s-top-left>a'
   validate_presence :sites
-  validate_includeness :sites, :logo
+  validate_includeness :sites
 end
 
 describe Digger do
@@ -19,12 +18,12 @@ describe Digger do
 
   it "pattern should match content" do
     sites = pattern.match_page(page)
-    expect(sites.include?('百度网盘')).to eq(true)
+    expect(sites.include?('新闻')).to eq(true)
   end
 
   it "model should dig content" do
     item = Item.new.match_page(page)
-    expect(item[:sites].include?('读远')).to be(true)
+    expect(item[:sites].include?('新闻')).to be(true)
   end
 
   it "validation support" do
