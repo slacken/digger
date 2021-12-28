@@ -1,6 +1,7 @@
 require 'digger'
 require 'json'
 require 'uri'
+require 'cgi'
 
 describe Digger::Page do
   it 'page json' do
@@ -15,13 +16,12 @@ describe Digger::Page do
 
   it 'fetch baidu' do
     http = Digger::HTTP.new
-    page = http.fetch_page('http://www.baidu.com/')
+    page = http.fetch_page('http://baidu.com/')
     expect(page.code).to eq(200)
   end
 
-  it 'page uri' do
-    link ='https://www.baidu.com/s?wd=%E5%93%88%E5%93%88#hello'
-    link = link.to_s.encode('utf-8', 'binary', invalid: :replace, undef: :replace, replace: '').gsub(/#[\w]*$/, '')
-    p link
-  end
+  # it 'page uri' do
+  #   link = 'https://www.baidu.com/s?wd=%E5%93%88%E5%93%88#hello'
+  #   link = link.to_s.encode('utf-8', 'binary', invalid: :replace, undef: :replace, replace: '').gsub(/#\w*$/, '')
+  # end
 end

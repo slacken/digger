@@ -11,7 +11,7 @@ module Digger
 
     def safe_block(&default_block)
       if block.nil? || (block.is_a?(String) && block.strip.empty?)
-        default_block
+        default_block || ->(v) { v }
       elsif block.respond_to?(:call)
         block
       else
@@ -32,25 +32,32 @@ module Digger
     TYPES_CSS = %w[css_one css_many].freeze
     TYPES_JSON = %w[json jsonp].freeze
 
-    TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON
+    TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON + ['cookie']
 
     def match_page(page)
       return unless page.success?
+
       if TYPES_REGEXP.include?(type) # regular expression
         regexp_match(page.body)
       elsif TYPES_CSS.include?(type) # css expression
         css_match(page.doc)
       elsif TYPES_JSON.include?(type)
         json_match(page)
+      else
+        cookie_get(page.cookies)
       end
     end
 
+    def cookie_get(cookies)
+      cookie = cookies.find { |c| c.name == value }&.value
+      safe_block.call(cookie)
+    end
+
     def json_match(page)
-      block = safe_block { |j| j }
       json = page.send(type)
       keys = json_index_keys(value)
       match = json_fetch(json, keys)
-      block.call(match)
+      safe_block.call(match)
     end
 
     def css_match(doc)

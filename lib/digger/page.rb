@@ -4,6 +4,7 @@ require 'ostruct'
 require 'set'
 require 'kconv'
 require 'uri'
+require 'http/cookie'
 
 # https://github.com/taganaka/polipus/blob/master/lib/polipus/page.rb
 module Digger
@@ -99,6 +100,10 @@ module Digger
 
     def jsonp
       @jsonp ||= JSON.parse body.match(/^[^(]+?\((.+)\)[^)]*$/)[1]
+    end
+
+    def cookies
+      @cookies ||= (headers['set-cookie'] || []).flat_map { |c| ::HTTP::Cookie.parse(c, url) }
     end
 
     #
