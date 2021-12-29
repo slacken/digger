@@ -9,4 +9,20 @@ describe Digger::Index do
     end
     expect(pt.join).to eq(list.map { |num| "##{num}" }.join)
   end
+
+  it 'slow down' do
+    list = [1, 2, 3, 4]
+    conf = {
+      sleep_range_seconds: 1...2,
+      fail_unit_seconds: 1,
+      fail_max_cnt: 2,
+      when_fail: ->(_, e, nth) { puts "#{nth}: #{e.message}" }
+    }
+    pt = Digger::Index.slow_down(list, conf) do |num|
+      raise 'error' if num == 3
+      num
+    end
+    p pt
+    expect(pt.size).to eq(2)
+  end
 end
