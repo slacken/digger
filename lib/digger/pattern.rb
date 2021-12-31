@@ -6,7 +6,9 @@ module Digger
     attr_accessor :type, :value, :block
 
     def initialize(hash = {})
-      hash.each_pair { |key, value| send("#{key}=", value) if %w[type value block].include?(key.to_s)}
+      hash.each_pair do |key, value|
+        send("#{key}=", value) if %w[type value block].include?(key.to_s)
+      end
     end
 
     def safe_block(&default_block)
@@ -31,8 +33,9 @@ module Digger
     TYPES_REGEXP = 0.upto(MATCH_MAX).map { |i| "match_#{i}" } + %w[match_many]
     TYPES_CSS = %w[css_one css_many].freeze
     TYPES_JSON = %w[json jsonp].freeze
+    TYPES_OTHER = %w[cookie plain lines header body].freeze
 
-    TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON + ['cookie']
+    TYPES = TYPES_REGEXP + TYPES_CSS + TYPES_JSON + TYPES_OTHER
 
     def match_page(page)
       return unless page.success?
@@ -43,13 +46,31 @@ module Digger
         css_match(page.doc)
       elsif TYPES_JSON.include?(type)
         json_match(page)
-      else
-        cookie_get(page.cookies)
+      elsif TYPES_OTHER.include?(type)
+        send("get_#{type}", page)
       end
     end
 
-    def cookie_get(cookies)
-      cookie = cookies.find { |c| c.name == value }&.value
+    def get_header(page)
+      header = (page.headers[value.to_s.downcase] || []).first
+      safe_block.call(header)
+    end
+
+    def get_body(page)
+      safe_block.call(page.body)
+    end
+
+    def get_plain(page)
+      safe_block.call(page.doc.text)
+    end
+
+    def get_lines(page)
+      block = safe_block
+      page.body.split("\n").map(&:strip).filter { |line| !line.empty? }.map { |line| block.call(line) }
+    end
+
+    def get_cookie(page)
+      cookie = page.cookies.find { |c| c.name == value }&.value
       safe_block.call(cookie)
     end
 
@@ -75,7 +96,8 @@ module Digger
       block = safe_block(&:strip)
       # content is String
       if type == 'match_many'
-        body.gsub(value).to_a.map { |node| block.call(node) }.uniq
+        regexp = value.is_a?(Regexp) ? value : Regexp.new(value.to_s)
+        body.gsub(regexp).to_a.map { |node| block.call(node) }.uniq
       else
         index = TYPES_REGEXP.index(type)
         matches = body.match(value)
