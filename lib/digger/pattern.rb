@@ -82,7 +82,7 @@ module Digger
     end
 
     def css_match(doc)
-      block = safe_block { |node| node.content.strip }
+      block = safe_block { |node| node&.content&.strip }
       # content is Nokogiri::HTML::Document
       contents = doc.css(value)
       if type == 'css_many'
