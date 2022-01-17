@@ -122,20 +122,23 @@ module Digger
 
     private :json_index_keys, :json_fetch
 
-    # Nokogiri node methods
-    class Nokogiri::XML::Node
-      %w[one many].each do |name|
-        define_method "inner_#{name}" do |css, &block|
-          callback = ->(node) { (block || ->(n) { n.text.strip }).call(node) if node }
-          if name == 'one' # inner_one
-            callback.call(self.css(css).first)
-          else # inner_many
-            self.css(css).map { |node| callback.call(node) }
-          end
-        end
+    class ::Nokogiri::XML::Node
+      def inner_one(expr, &block)
+        fn = block || ->(node) { node&.content&.strip }
+        fn.call(css(expr)&.first)
       end
+
+      def inner_many(expr, &block)
+        fn = block || ->(node) { node&.content&.strip }
+        css(expr)&.map { |node| fn.call(node) }
+      end
+
       def source
         to_xml
+      end
+
+      def inner_number
+        content&.match(/\d+/).to_s.to_i
       end
     end
   end
