@@ -61,7 +61,7 @@ module Digger
     end
 
     def get_plain(page)
-      safe_block.call(page.doc.text)
+      safe_block.call(page.doc&.text)
     end
 
     def get_lines(page)
