@@ -24,4 +24,10 @@ describe Digger::Pattern do
     p3 = Digger::Pattern.new({ type: 'plain' })
     expect(p3.match_page(page).length).to be > 100
   end
+
+  it 'match_all & css_all' do
+    p = Digger::Pattern.new({ type: 'match_all', value: '[\d]+' })
+    m = p.regexp_match('123,12,1')
+    expect(m.length).to eq(3)
+  end
 end

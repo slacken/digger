@@ -30,8 +30,8 @@ module Digger
 
     MATCH_MAX = 3
 
-    TYPES_REGEXP = 0.upto(MATCH_MAX).map { |i| "match_#{i}" } + %w[match_many]
-    TYPES_CSS = %w[css_one css_many].freeze
+    TYPES_REGEXP = 0.upto(MATCH_MAX).map { |i| "match_#{i}" } + %w[match_many match_all]
+    TYPES_CSS = %w[css_one css_many css_all].freeze
     TYPES_JSON = %w[json jsonp].freeze
     TYPES_OTHER = %w[cookie plain lines header body].freeze
 
@@ -82,25 +82,36 @@ module Digger
     end
 
     def css_match(doc)
-      block = safe_block { |node| node&.content&.strip }
       # content is Nokogiri::HTML::Document
       contents = doc.css(value)
       if type == 'css_many'
-        contents.map { |node| block.call(node) }.uniq
+        block = safe_block { |node| node&.content&.strip }
+        contents.map { |node| block.call(node) }
+      elsif type == 'css_all'
+        block = safe_block
+        block.call(contents)
       else
+        block = safe_block { |node| node&.content&.strip }
         block.call(contents.first)
       end
     end
 
     def regexp_match(body)
-      block = safe_block(&:strip)
       # content is String
-      if type == 'match_many'
+      if %w[match_many match_all].include? type
         regexp = value.is_a?(Regexp) ? value : Regexp.new(value.to_s)
-        body.gsub(regexp).to_a.map { |node| block.call(node) }.uniq
+        matches = body.gsub(regexp).to_a
+        if type == 'match_many'
+          block = safe_block(&:strip)
+          matches.map { |node| block.call(node) }
+        else
+          block = safe_block
+          block.call(matches)
+        end
       else
         index = TYPES_REGEXP.index(type)
         matches = body.match(value)
+        block = safe_block(&:strip)
         block.call(matches[index]) unless matches.nil?
       end
     end
